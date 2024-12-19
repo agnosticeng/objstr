@@ -17,7 +17,7 @@ type CnfProvider struct {
 }
 
 func NewCnfProvider(os *objstr.ObjectStore, path string) *CnfProvider {
-	return &CnfProvider{path: path}
+	return &CnfProvider{os: os, path: path}
 }
 
 func (p *CnfProvider) ReadMap() (map[string]interface{}, error) {
