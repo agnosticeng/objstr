@@ -23,6 +23,7 @@ require (
 
 require (
 	dario.cat/mergo v1.0.1 // indirect
+	github.com/agnosticeng/cliutils v0.1.0 // indirect
 	github.com/agnosticeng/dynamap v0.1.2 // indirect
 	github.com/agnosticeng/mapstructure-hooks v0.3.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.6 // indirect

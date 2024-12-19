@@ -22,7 +22,7 @@ type S3BackendConfig struct {
 	Endpoint            string
 	Region              string
 	DisableSsl          bool
-	S3ForcePathStyle    bool
+	ForcePathStyle      bool
 	UploadPartSize      int
 	UploadConcurrency   int
 	UploadMaxParts      int
@@ -51,10 +51,12 @@ func NewS3Backend(ctx context.Context, conf S3BackendConfig) (*S3Backend, error)
 
 	if len(conf.Region) > 0 {
 		awsConf = awsConf.WithRegion(conf.Region)
+	} else {
+		awsConf = awsConf.WithRegion("auto")
 	}
 
 	awsConf = awsConf.WithDisableSSL(conf.DisableSsl)
-	awsConf = awsConf.WithS3ForcePathStyle(conf.S3ForcePathStyle)
+	awsConf = awsConf.WithS3ForcePathStyle(conf.ForcePathStyle)
 
 	awsSession, err := session.NewSession(awsConf)
 

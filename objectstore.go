@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"strings"
 
+	"dario.cat/mergo"
 	"github.com/agnosticeng/objstr/backend"
 	"github.com/agnosticeng/objstr/backend/impl/fs"
 	"github.com/agnosticeng/objstr/backend/impl/http"
@@ -15,38 +17,56 @@ import (
 	"github.com/agnosticeng/objstr/backend/impl/sftp"
 	"github.com/agnosticeng/objstr/types"
 	"github.com/hashicorp/go-multierror"
+	"github.com/samber/lo"
 )
 
 type ObjectStore struct {
-	conf     ObjectStoreConfig
+	conf     Config
 	backends map[string]backend.Backend
 }
 
-func NewObjectStore(ctx context.Context, conf ObjectStoreConfig) (*ObjectStore, error) {
+func NewObjectStore(ctx context.Context, conf Config) (*ObjectStore, error) {
 	if conf.CopyBufferSize == 0 {
 		conf.CopyBufferSize = 1024 * 1024
 	}
 
-	var backends = make(map[string]backend.Backend)
-
-	if !conf.DisableDefaultBackends {
-		var (
-			fsBackend   = fs.NewFSBackend(ctx, fs.FSBackendConfig{})
-			httpBackend = http.NewHTTPBackend(ctx, http.HTTPBackendConfig{})
-			sftpBackend = sftp.NewSFTPBackend(ctx, sftp.SFTPBackendConfig{})
-			memBackend  = memory.NewMemoryBackend(ctx, memory.MemoryBackendConfig{})
-		)
-
-		backends[""] = fsBackend
-		backends["file"] = fsBackend
-		backends["mem"] = memBackend
-		backends["memory"] = memBackend
-		backends["http"] = httpBackend
-		backends["https"] = httpBackend
-		backends["sftp"] = sftpBackend
+	if len(conf.DefaultBackend) == 0 {
+		conf.DefaultBackend = "file"
 	}
 
-	for _, backendConf := range conf.Backends {
+	var backendConfigs map[string]BackendConfig
+
+	backendConfigs = map[string]BackendConfig{
+		"file":   {Fs: lo.Ternary(conf.BackendConfig.Fs != nil, conf.BackendConfig.Fs, &fs.FSBackendConfig{})},
+		"memory": {Memory: lo.Ternary(conf.BackendConfig.Memory != nil, conf.BackendConfig.Memory, &memory.MemoryBackendConfig{})},
+		"http":   {Http: lo.Ternary(conf.BackendConfig.Http != nil, conf.BackendConfig.Http, &http.HTTPBackendConfig{})},
+		"https":  {Http: lo.Ternary(conf.BackendConfig.Http != nil, conf.BackendConfig.Http, &http.HTTPBackendConfig{})},
+	}
+
+	if conf.Sftp != nil {
+		backendConfigs["sftp"] = BackendConfig{Sftp: conf.BackendConfig.Sftp}
+	}
+
+	if conf.S3 != nil {
+		backendConfigs["s3"] = BackendConfig{S3: conf.BackendConfig.S3}
+	}
+
+	if conf.Redis != nil {
+		backendConfigs["redis"] = BackendConfig{Redis: conf.BackendConfig.Redis}
+	}
+
+	if err := mergo.Merge(
+		&backendConfigs,
+		conf.Backends,
+		mergo.WithOverride,
+		mergo.WithSliceDeepCopy,
+	); err != nil {
+		return nil, err
+	}
+
+	var backends = make(map[string]backend.Backend)
+
+	for scheme, backendConf := range backendConfigs {
 		var (
 			backend backend.Backend
 			err     error
@@ -55,24 +75,34 @@ func NewObjectStore(ctx context.Context, conf ObjectStoreConfig) (*ObjectStore, 
 		switch {
 		case backendConf.Fs != nil:
 			backend = fs.NewFSBackend(ctx, *backendConf.Fs)
-		case backendConf.Mem != nil:
-			backend = memory.NewMemoryBackend(ctx, *backendConf.Mem)
+		case backendConf.Memory != nil:
+			backend = memory.NewMemoryBackend(ctx, *backendConf.Memory)
 		case backendConf.Http != nil:
 			backend = http.NewHTTPBackend(ctx, *backendConf.Http)
 		case backendConf.S3 != nil:
 			backend, err = s3.NewS3Backend(ctx, *backendConf.S3)
 		case backendConf.Redis != nil:
 			backend, err = redis.NewRedisBackend(ctx, *backendConf.Redis)
+		case backendConf.Sftp != nil:
+			backend = sftp.NewSFTPBackend(ctx, *backendConf.Sftp)
 		default:
-			return nil, fmt.Errorf("backend conf must be specified for scheme: %s", backendConf.Scheme)
+			return nil, fmt.Errorf("backend conf must be specified for scheme: %s", strings.ToLower(scheme))
 		}
 
 		if err != nil {
 			return nil, err
 		}
 
-		backends[backendConf.Scheme] = backend
+		backends[strings.ToLower(scheme)] = backend
 	}
+
+	be, found := backends[conf.DefaultBackend]
+
+	if !found {
+		return nil, fmt.Errorf("default backend %s does not exists", conf.DefaultBackend)
+	}
+
+	backends[""] = be
 
 	return &ObjectStore{
 		conf:     conf,
@@ -80,7 +110,7 @@ func NewObjectStore(ctx context.Context, conf ObjectStoreConfig) (*ObjectStore, 
 	}, nil
 }
 
-func MustNewObjectStore(ctx context.Context, conf ObjectStoreConfig) *ObjectStore {
+func MustNewObjectStore(ctx context.Context, conf Config) *ObjectStore {
 	if store, err := NewObjectStore(ctx, conf); err != nil {
 		panic(err)
 	} else {
@@ -93,10 +123,10 @@ func (os *ObjectStore) getBackend(u *url.URL) (backend.Backend, error) {
 		return nil, fmt.Errorf("url must not be nil")
 	}
 
-	backend, found := os.backends[u.Scheme]
+	backend, found := os.backends[strings.ToLower(u.Scheme)]
 
 	if !found {
-		return nil, fmt.Errorf("no backend found for scheme %s", u.Scheme)
+		return nil, fmt.Errorf("no backend found for scheme %s", strings.ToLower(u.Scheme))
 	}
 
 	return backend, nil

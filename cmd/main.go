@@ -4,9 +4,10 @@ import (
 	"log"
 	"os"
 
+	"github.com/agnosticeng/cliutils"
 	"github.com/agnosticeng/cnf"
 	"github.com/agnosticeng/cnf/providers/env"
-	"github.com/agnosticeng/objstr"
+	objstrcli "github.com/agnosticeng/objstr/cli"
 	"github.com/agnosticeng/objstr/cmd/copy"
 	"github.com/agnosticeng/objstr/cmd/copyprefix"
 	"github.com/agnosticeng/objstr/cmd/diff"
@@ -19,36 +20,18 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func setup(ctx *cli.Context) error {
-	if err := slogcli.SlogBefore(ctx); err != nil {
-		return err
-	}
-
-	var cfg objstr.ObjectStoreConfig
-
-	if err := cnf.Load(
-		&cfg,
-		cnf.WithProvider(env.NewEnvProvider("OBJSTR")),
-	); err != nil {
-		return err
-	}
-
-	store, err := objstr.NewObjectStore(ctx.Context, cfg)
-
-	if err != nil {
-		return err
-	}
-
-	ctx.Context = objstr.NewContext(ctx.Context, store)
-	return nil
-}
-
 func main() {
 	app := cli.App{
-		Name:   "objstr",
-		Before: setup,
-		After:  slogcli.SlogAfter,
-		Flags:  slogcli.SlogFlags(),
+		Name: "objstr",
+		Before: cliutils.CombineBeforeFuncs(
+			slogcli.SlogBefore,
+			objstrcli.ObjStrBefore(cnf.WithProvider(env.NewEnvProvider("OBJSTR"))),
+		),
+		After: cliutils.CombineAfterFuncs(
+			objstrcli.ObjStrAfter,
+			slogcli.SlogAfter,
+		),
+		Flags: slogcli.SlogFlags(),
 		Commands: []*cli.Command{
 			list.Command(),
 			copy.Command(),
