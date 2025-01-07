@@ -8,6 +8,7 @@ import (
 type ObjectMetadata struct {
 	Size             uint64
 	ModificationDate time.Time
+	ETag             string
 }
 
 type Object struct {

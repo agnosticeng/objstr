@@ -28,6 +28,8 @@ type S3BackendConfig struct {
 	UploadMaxParts      int
 	DownloadPartSize    int
 	DownloadConcurrency int
+	EnableAwsSdkLogging bool
+	AwsSdkLogLevel      string
 }
 
 type S3Backend struct {
@@ -39,7 +41,10 @@ type S3Backend struct {
 }
 
 func NewS3Backend(ctx context.Context, conf S3BackendConfig) (*S3Backend, error) {
-	awsConf := aws.NewConfig()
+	var (
+		logger  = slogctx.FromCtx(ctx)
+		awsConf = aws.NewConfig()
+	)
 
 	if len(conf.AccessKeyId) > 0 {
 		awsConf = awsConf.WithCredentials(credentials.NewStaticCredentials(conf.AccessKeyId, conf.SecretAccessKey, conf.SessionToken))
@@ -57,6 +62,14 @@ func NewS3Backend(ctx context.Context, conf S3BackendConfig) (*S3Backend, error)
 
 	awsConf = awsConf.WithDisableSSL(conf.DisableSsl)
 	awsConf = awsConf.WithS3ForcePathStyle(conf.ForcePathStyle)
+
+	if conf.EnableAwsSdkLogging {
+		awsConf = awsConf.WithLogger(aws.LoggerFunc(func(args ...interface{}) {
+			logger.Debug("AWS SDk LOG", "content", fmt.Sprint(args...))
+		}))
+
+		awsConf = awsConf.WithLogLevel(logLevelTypeFromString(conf.AwsSdkLogLevel))
+	}
 
 	awsSession, err := session.NewSession(awsConf)
 
@@ -123,16 +136,24 @@ func (be *S3Backend) ListPrefix(ctx context.Context, u *url.URL, optFunc ...type
 		contToken = output.NextContinuationToken
 
 		for _, object := range output.Contents {
-			var obj types.Object
-
-			obj.URL = &url.URL{
-				Host: *output.Name,
-				Path: "/" + *object.Key,
+			var obj = types.Object{
+				URL: &url.URL{
+					Host: *output.Name,
+					Path: "/" + *object.Key,
+				},
+				Metadata: &types.ObjectMetadata{},
 			}
 
-			obj.Metadata = &types.ObjectMetadata{
-				Size:             uint64(*object.Size),
-				ModificationDate: *object.LastModified,
+			if object.Size != nil {
+				obj.Metadata.Size = uint64(*object.Size)
+			}
+
+			if object.LastModified != nil {
+				obj.Metadata.ModificationDate = *object.LastModified
+			}
+
+			if object.ETag != nil {
+				obj.Metadata.ETag = *object.ETag
 			}
 
 			res = append(res, &obj)
@@ -147,7 +168,11 @@ func (be *S3Backend) ReadMetadata(ctx context.Context, u *url.URL) (*types.Objec
 		return nil, err
 	}
 
-	var input = &s3.HeadObjectInput{}
+	var (
+		input = &s3.HeadObjectInput{}
+		md    types.ObjectMetadata
+	)
+
 	input = input.SetBucket(u.Host)
 	input = input.SetKey(u.Path)
 
@@ -157,8 +182,22 @@ func (be *S3Backend) ReadMetadata(ctx context.Context, u *url.URL) (*types.Objec
 		return nil, processError(err)
 	}
 
+	if info.ContentLength != nil {
+		md.Size = uint64(*info.ContentLength)
+	}
+
+	if info.LastModified != nil {
+		md.ModificationDate = *info.LastModified
+	}
+
+	if info.ETag != nil {
+		md.ETag = *info.ETag
+	}
+
 	return &types.ObjectMetadata{
-		Size: uint64(*info.ContentLength),
+		Size:             uint64(*info.ContentLength),
+		ModificationDate: *info.LastModified,
+		ETag:             *info.ETag,
 	}, nil
 }
 

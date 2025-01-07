@@ -45,12 +45,18 @@ func Command() *cli.Command {
 			var totalSize uint64
 
 			for _, object := range objects {
-				fmt.Println(object.URL.String(), humanize.Bytes(object.Metadata.Size), object.Metadata.ModificationDate)
+				fmt.Println(
+					object.URL.String(),
+					humanize.Bytes(object.Metadata.Size),
+					object.Metadata.ModificationDate,
+					object.Metadata.ETag,
+				)
+
 				totalSize += object.Metadata.Size
 			}
 
 			fmt.Println()
-			fmt.Println("total", humanize.Bytes(totalSize))
+			fmt.Println("size", humanize.Bytes(totalSize), "files", len(objects))
 			return nil
 		},
 	}

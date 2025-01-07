@@ -3,6 +3,8 @@ module github.com/agnosticeng/objstr
 go 1.23.2
 
 require (
+	dario.cat/mergo v1.0.1
+	github.com/agnosticeng/cliutils v0.1.0
 	github.com/agnosticeng/cnf v0.1.0
 	github.com/agnosticeng/concu v0.0.1
 	github.com/agnosticeng/errgroup v0.1.0
@@ -19,11 +21,10 @@ require (
 	github.com/veqryn/slog-context v0.7.0
 	golang.org/x/crypto v0.22.0
 	golang.org/x/sync v0.10.0
+	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
-	dario.cat/mergo v1.0.1 // indirect
-	github.com/agnosticeng/cliutils v0.1.0 // indirect
 	github.com/agnosticeng/dynamap v0.1.2 // indirect
 	github.com/agnosticeng/mapstructure-hooks v0.3.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.6 // indirect
@@ -40,5 +41,4 @@ require (
 	golang.org/x/sys v0.20.0 // indirect
 	golang.org/x/text v0.17.0 // indirect
 	google.golang.org/protobuf v1.36.0 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
