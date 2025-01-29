@@ -8,8 +8,8 @@ import (
 	"net/url"
 
 	"github.com/agnosticeng/concu/mapstream"
-	"github.com/agnosticeng/errgroup"
 	"github.com/hashicorp/go-multierror"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/aws/aws-sdk-go/service/s3"
 )

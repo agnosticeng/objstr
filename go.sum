@@ -48,8 +48,6 @@ github.com/agnosticeng/concu v0.0.1 h1:dPGhLV1TuNg4NNQ40oTVRbNv8CFE0AMXxdbYlpZKm
 github.com/agnosticeng/concu v0.0.1/go.mod h1:2+trZm91iKXMaZCgJ5jKEmLnfeveuOQLWb4kfgNCUGs=
 github.com/agnosticeng/dynamap v0.1.2 h1:9+QnNAgE3vm0bUqqwsV1r33iGCh/9eN8hR442HkLS8s=
 github.com/agnosticeng/dynamap v0.1.2/go.mod h1:DBq9RNSJWih2O0WAcbUt5lPRoiEsSxO/lBdjFNHCV+0=
-github.com/agnosticeng/errgroup v0.1.0 h1:ewebUcU+OgAWvo72MCRX3Xw/QDN2sINAy2sF1cBJB7I=
-github.com/agnosticeng/errgroup v0.1.0/go.mod h1:6bA9z5vJHcdcd1qpNvheNbUkEOFp2LzJyPq0yx2c8D4=
 github.com/agnosticeng/mapstructure-hooks v0.3.0 h1:/zlwNYeGvTb9wQKVStwkRQqdbk125++qASi51i+63mA=
 github.com/agnosticeng/mapstructure-hooks v0.3.0/go.mod h1:1cGQohJ+hwNOlgb231xY4AEfK9RNN4Dg9rKkSEDN0u0=
 github.com/agnosticeng/slogcli v0.1.1 h1:rS0jde4Ha3GafF7Ww25YQANqQDz9QnIYZ1M5ngnM8Vk=

@@ -7,7 +7,6 @@ require (
 	github.com/agnosticeng/cliutils v0.1.0
 	github.com/agnosticeng/cnf v0.1.0
 	github.com/agnosticeng/concu v0.0.1
-	github.com/agnosticeng/errgroup v0.1.0
 	github.com/agnosticeng/slogcli v0.1.1
 	github.com/aws/aws-sdk-go v1.38.31
 	github.com/dustin/go-humanize v1.0.1
