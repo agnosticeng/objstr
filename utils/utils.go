@@ -27,6 +27,9 @@ func CreateObject(ctx context.Context, os *objstr.ObjectStore, u *url.URL, data 
 		return err
 	}
 
-	_, err = io.Copy(w, bytes.NewReader(data))
-	return err
+	if _, err := io.Copy(w, bytes.NewReader(data)); err != nil {
+		return err
+	}
+
+	return w.Close()
 }

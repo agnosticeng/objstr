@@ -194,11 +194,7 @@ func (be *S3Backend) ReadMetadata(ctx context.Context, u *url.URL) (*types.Objec
 		md.ETag = *info.ETag
 	}
 
-	return &types.ObjectMetadata{
-		Size:             uint64(*info.ContentLength),
-		ModificationDate: *info.LastModified,
-		ETag:             *info.ETag,
-	}, nil
+	return &md, nil
 }
 
 func (be *S3Backend) Reader(ctx context.Context, u *url.URL) (types.Reader, error) {
