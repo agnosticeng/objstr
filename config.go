@@ -2,6 +2,7 @@ package objstr
 
 import (
 	"github.com/agnosticeng/objstr/backend/impl/fs"
+	"github.com/agnosticeng/objstr/backend/impl/git"
 	"github.com/agnosticeng/objstr/backend/impl/http"
 	"github.com/agnosticeng/objstr/backend/impl/memory"
 	"github.com/agnosticeng/objstr/backend/impl/redis"
@@ -16,6 +17,7 @@ type BackendConfig struct {
 	S3     *s3.S3BackendConfig
 	Sftp   *sftp.SFTPBackendConfig
 	Redis  *redis.RedisBackendConfig
+	Git    *git.GitBackendConfig
 }
 
 type Config struct {

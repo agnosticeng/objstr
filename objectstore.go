@@ -10,6 +10,7 @@ import (
 	"dario.cat/mergo"
 	"github.com/agnosticeng/objstr/backend"
 	"github.com/agnosticeng/objstr/backend/impl/fs"
+	"github.com/agnosticeng/objstr/backend/impl/git"
 	"github.com/agnosticeng/objstr/backend/impl/http"
 	"github.com/agnosticeng/objstr/backend/impl/memory"
 	"github.com/agnosticeng/objstr/backend/impl/redis"
@@ -37,10 +38,12 @@ func NewObjectStore(ctx context.Context, conf Config) (*ObjectStore, error) {
 	var backendConfigs map[string]BackendConfig
 
 	backendConfigs = map[string]BackendConfig{
-		"file":   {Fs: lo.Ternary(conf.BackendConfig.Fs != nil, conf.BackendConfig.Fs, &fs.FSBackendConfig{})},
-		"memory": {Memory: lo.Ternary(conf.BackendConfig.Memory != nil, conf.BackendConfig.Memory, &memory.MemoryBackendConfig{})},
-		"http":   {Http: lo.Ternary(conf.BackendConfig.Http != nil, conf.BackendConfig.Http, &http.HTTPBackendConfig{})},
-		"https":  {Http: lo.Ternary(conf.BackendConfig.Http != nil, conf.BackendConfig.Http, &http.HTTPBackendConfig{})},
+		"file":      {Fs: lo.Ternary(conf.BackendConfig.Fs != nil, conf.BackendConfig.Fs, &fs.FSBackendConfig{})},
+		"memory":    {Memory: lo.Ternary(conf.BackendConfig.Memory != nil, conf.BackendConfig.Memory, &memory.MemoryBackendConfig{})},
+		"http":      {Http: lo.Ternary(conf.BackendConfig.Http != nil, conf.BackendConfig.Http, &http.HTTPBackendConfig{})},
+		"https":     {Http: lo.Ternary(conf.BackendConfig.Http != nil, conf.BackendConfig.Http, &http.HTTPBackendConfig{})},
+		"git+https": {Git: lo.Ternary(conf.BackendConfig.Git != nil, conf.BackendConfig.Git, &git.GitBackendConfig{})},
+		"git+ssh":   {Git: lo.Ternary(conf.BackendConfig.Git != nil, conf.BackendConfig.Git, &git.GitBackendConfig{})},
 	}
 
 	if conf.Sftp != nil {
@@ -85,6 +88,8 @@ func NewObjectStore(ctx context.Context, conf Config) (*ObjectStore, error) {
 			backend, err = redis.NewRedisBackend(ctx, *backendConf.Redis)
 		case backendConf.Sftp != nil:
 			backend = sftp.NewSFTPBackend(ctx, *backendConf.Sftp)
+		case backendConf.Git != nil:
+			backend, err = git.NewGitBackend(ctx, *backendConf.Git)
 		default:
 			return nil, fmt.Errorf("backend conf must be specified for scheme: %s", strings.ToLower(scheme))
 		}
