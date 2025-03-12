@@ -3,7 +3,6 @@ package git
 import (
 	"context"
 	stderr "errors"
-	"fmt"
 	"io"
 	"net/url"
 	"os"
@@ -90,9 +89,6 @@ func (be *GitBackend) cloneCommit(ctx context.Context, fl *fileLocation) (*objec
 	if len(fl.Ref) > 0 {
 		opts.ReferenceName = plumbing.ReferenceName(fl.Ref)
 	}
-
-	fmt.Println(opts.URL)
-	fmt.Println(opts.ReferenceName)
 
 	r, err := git.PlainCloneContext(ctx, clonePath, true, &opts)
 
