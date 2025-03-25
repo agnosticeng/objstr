@@ -15,6 +15,8 @@ func processError(err error) error {
 		switch err.Code() {
 		case "NoSuchKey":
 			return errors.ErrObjectNotFound
+		case "NotFound":
+			return errors.ErrObjectNotFound
 		default:
 			return err
 		}
