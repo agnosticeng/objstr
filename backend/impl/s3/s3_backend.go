@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/agnosticeng/objstr/types"
@@ -46,6 +47,26 @@ func NewS3Backend(ctx context.Context, conf S3BackendConfig) (*S3Backend, error)
 		awsConf = aws.NewConfig()
 	)
 
+	if v := os.Getenv("AWS_ACCESS_KEY_ID"); len(conf.AccessKeyId) == 0 && len(v) > 0 {
+		conf.AccessKeyId = v
+	}
+
+	if v := os.Getenv("AWS_SECRET_ACCESS_KEY"); len(conf.SecretAccessKey) == 0 && len(v) > 0 {
+		conf.SecretAccessKey = v
+	}
+
+	if v := os.Getenv("AWS_SESSION_TOKEN"); len(conf.SessionToken) == 0 && len(v) > 0 {
+		conf.SessionToken = v
+	}
+
+	if v := os.Getenv("AWS_ENDPOINT"); len(conf.Endpoint) == 0 && len(v) > 0 {
+		conf.Endpoint = v
+	}
+
+	if v := os.Getenv("AWS_REGION"); len(conf.Region) == 0 && len(v) > 0 {
+		conf.Region = v
+	}
+
 	if len(conf.AccessKeyId) > 0 {
 		awsConf = awsConf.WithCredentials(credentials.NewStaticCredentials(conf.AccessKeyId, conf.SecretAccessKey, conf.SessionToken))
 	}
@@ -56,8 +77,6 @@ func NewS3Backend(ctx context.Context, conf S3BackendConfig) (*S3Backend, error)
 
 	if len(conf.Region) > 0 {
 		awsConf = awsConf.WithRegion(conf.Region)
-	} else {
-		awsConf = awsConf.WithRegion("auto")
 	}
 
 	awsConf = awsConf.WithDisableSSL(conf.DisableSsl)

@@ -39,6 +39,7 @@ func NewObjectStore(ctx context.Context, conf Config) (*ObjectStore, error) {
 
 	backendConfigs = map[string]BackendConfig{
 		"file":      {Fs: lo.Ternary(conf.BackendConfig.Fs != nil, conf.BackendConfig.Fs, &fs.FSBackendConfig{})},
+		"s3":        {S3: lo.Ternary(conf.BackendConfig.S3 != nil, conf.BackendConfig.S3, &s3.S3BackendConfig{})},
 		"memory":    {Memory: lo.Ternary(conf.BackendConfig.Memory != nil, conf.BackendConfig.Memory, &memory.MemoryBackendConfig{})},
 		"http":      {Http: lo.Ternary(conf.BackendConfig.Http != nil, conf.BackendConfig.Http, &http.HTTPBackendConfig{})},
 		"https":     {Http: lo.Ternary(conf.BackendConfig.Http != nil, conf.BackendConfig.Http, &http.HTTPBackendConfig{})},
@@ -48,10 +49,6 @@ func NewObjectStore(ctx context.Context, conf Config) (*ObjectStore, error) {
 
 	if conf.Sftp != nil {
 		backendConfigs["sftp"] = BackendConfig{Sftp: conf.BackendConfig.Sftp}
-	}
-
-	if conf.S3 != nil {
-		backendConfigs["s3"] = BackendConfig{S3: conf.BackendConfig.S3}
 	}
 
 	if conf.Redis != nil {
