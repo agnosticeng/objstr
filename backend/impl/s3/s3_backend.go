@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/agnosticeng/objstr/types"
@@ -63,8 +64,22 @@ func NewS3Backend(ctx context.Context, conf S3BackendConfig) (*S3Backend, error)
 		conf.Endpoint = v
 	}
 
+	if v := os.Getenv("AWS_S3_ENDPOINT"); len(conf.Endpoint) == 0 && len(v) > 0 {
+		conf.Endpoint = v
+	}
+
 	if v := os.Getenv("AWS_REGION"); len(conf.Region) == 0 && len(v) > 0 {
 		conf.Region = v
+	}
+
+	if v := os.Getenv("AWS_S3_FORCE_PATH_STLE"); len(v) > 0 {
+		if b, err := strconv.ParseBool(v); err == nil {
+			conf.ForcePathStyle = b
+		}
+	}
+
+	if strings.HasPrefix(conf.Endpoint, "http://") {
+		conf.DisableSsl = true
 	}
 
 	if len(conf.AccessKeyId) > 0 {
