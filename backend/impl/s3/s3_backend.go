@@ -2,8 +2,10 @@ package s3
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"net/url"
 	"os"
 	"strconv"
@@ -24,6 +26,7 @@ type S3BackendConfig struct {
 	Endpoint            string
 	Region              string
 	DisableSsl          bool
+	InsecureSkipVerify  bool
 	ForcePathStyle      bool
 	UploadPartSize      int
 	UploadConcurrency   int
@@ -94,6 +97,15 @@ func NewS3Backend(ctx context.Context, conf S3BackendConfig) (*S3Backend, error)
 		awsConf = awsConf.WithRegion(conf.Region)
 	}
 
+	var transport = http.Transport{}
+
+	if conf.InsecureSkipVerify {
+		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	}
+
+	var client = &http.Client{Transport: &transport}
+
+	awsConf = awsConf.WithHTTPClient(client)
 	awsConf = awsConf.WithDisableSSL(conf.DisableSsl)
 	awsConf = awsConf.WithS3ForcePathStyle(conf.ForcePathStyle)
 
