@@ -71,6 +71,10 @@ func NewS3Backend(ctx context.Context, conf S3BackendConfig) (*S3Backend, error)
 		conf.Endpoint = v
 	}
 
+	if v := os.Getenv("AWS_ENDPOINT_URL_S3"); len(conf.Endpoint) == 0 && len(v) > 0 {
+		conf.Endpoint = v
+	}
+
 	if v := os.Getenv("AWS_REGION"); len(conf.Region) == 0 && len(v) > 0 {
 		conf.Region = v
 	}
